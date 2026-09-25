@@ -1,0 +1,7 @@
+com\cine\benja\cine_core\controller\FuncionInternalController.class
+com\cine\benja\cine_core\repository\ReservaRepository.class
+com\cine\benja\cine_core\CineCoreApplication.class
+com\cine\benja\cine_core\model\Funcion.class
+com\cine\benja\cine_core\repository\FuncionRepository.class
+com\cine\benja\cine_core\controller\ReservaInternalController.class
+com\cine\benja\cine_core\model\Reserva.class

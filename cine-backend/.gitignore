@@ -1,0 +1,10 @@
+target/
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Clave de la cuenta de servicio de Firebase - NUNCA se sube al repo
+*firebase-adminsdk*.json
