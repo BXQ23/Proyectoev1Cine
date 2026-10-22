@@ -4,6 +4,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,33 +12,29 @@ import org.springframework.context.annotation.Configuration;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-// Inicializa el SDK de administracion de Firebase UNA sola vez al arrancar el backend.
-// Este SDK es el que despues usa FirebaseAuthenticationFilter para verificar cada
-// token que llega desde el frontend.
+/** Firebase Admin se activa solo con APP_AUTH_MODE=firebase. La clave JSON nunca va dentro del ZIP. */
 @Configuration
+@ConditionalOnProperty(name = "app.auth.mode", havingValue = "firebase")
 public class FirebaseConfig {
 
-    // Ruta al .json de la cuenta de servicio, en TU maquina, fuera del repo.
-    // Se configura en application.properties (firebase.credentials.path) o con la
-    // variable de entorno FIREBASE_CREDENTIALS_PATH.
-    @Value("${firebase.credentials.path}")
-    private String credentialsPath;
-
     @Bean
-    public FirebaseApp firebaseApp() throws IOException {
+    public FirebaseAuth firebaseAuth(@Value("${firebase.credentials.path:}") String credentialsPath) throws IOException {
+        FirebaseApp app;
         if (!FirebaseApp.getApps().isEmpty()) {
-            return FirebaseApp.getInstance();
-        }
-        try (FileInputStream serviceAccount = new FileInputStream(credentialsPath)) {
-            FirebaseOptions options = FirebaseOptions.builder()
+            app = FirebaseApp.getInstance();
+        } else {
+            if (credentialsPath == null || credentialsPath.isBlank()) {
+                throw new IllegalStateException(
+                    "Falta FIREBASE_CREDENTIALS_PATH. Define la ruta al JSON de cuenta de servicio o usa APP_AUTH_MODE=dev solo localmente."
+                );
+            }
+            try (FileInputStream serviceAccount = new FileInputStream(credentialsPath)) {
+                FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
-            return FirebaseApp.initializeApp(options);
+                app = FirebaseApp.initializeApp(options);
+            }
         }
-    }
-
-    @Bean
-    public FirebaseAuth firebaseAuth(FirebaseApp firebaseApp) {
-        return FirebaseAuth.getInstance(firebaseApp);
+        return FirebaseAuth.getInstance(app);
     }
 }

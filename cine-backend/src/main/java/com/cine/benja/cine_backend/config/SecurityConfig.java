@@ -2,7 +2,9 @@ package com.cine.benja.cine_backend.config;
 
 import com.cine.benja.cine_backend.security.FirebaseAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,12 +18,22 @@ import org.springframework.http.HttpStatus;
 // Aca solo decidimos QUE rutas necesitan un token valido, y dejamos que
 // FirebaseAuthenticationFilter (ver paquete security) se encargue de verificarlo.
 @Configuration
+@ConditionalOnProperty(name = "app.auth.mode", havingValue = "firebase")
 public class SecurityConfig {
 
     private final FirebaseAuthenticationFilter firebaseAuthenticationFilter;
 
     public SecurityConfig(FirebaseAuthenticationFilter firebaseAuthenticationFilter) {
         this.firebaseAuthenticationFilter = firebaseAuthenticationFilter;
+    }
+
+
+    @Bean
+    public FilterRegistrationBean<FirebaseAuthenticationFilter> disableContainerRegistration(
+            FirebaseAuthenticationFilter filter) {
+        FilterRegistrationBean<FirebaseAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

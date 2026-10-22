@@ -2,6 +2,7 @@ package com.cine.benja.cine_core;
 
 import com.cine.benja.cine_core.model.Funcion;
 import com.cine.benja.cine_core.repository.FuncionRepository;
+import com.cine.benja.cine_core.messaging.ReservaEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Pruebas basicas del microservicio de negocio: como este servicio ya no
 // valida JWT (esa parte quedo en el BFF), aca solo probamos que el CRUD
 // en si funcione bien contra la base de datos.
-@SpringBootTest
+@SpringBootTest(properties = {"spring.rabbitmq.listener.simple.auto-startup=false", "spring.rabbitmq.dynamic=false"})
 @AutoConfigureMockMvc
 class CineCoreApplicationTests {
 
@@ -26,6 +27,9 @@ class CineCoreApplicationTests {
 
     @Autowired
     private FuncionRepository funcionRepository;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private ReservaEventPublisher reservaEventPublisher;
 
     @Test
     void contextLoads() {

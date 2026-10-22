@@ -10,21 +10,18 @@ async function obtenerAccessToken() {
   await auth.authStateReady()
 
   const usuarioActual = auth.currentUser
-  console.log('DEBUG usuarioActual:', usuarioActual)
 
   if (!usuarioActual) return null // nadie logueado -> se manda sin token (endpoints publicos)
 
   // getIdToken() renueva el token solo si ya esta por vencer - no hace falta
   // manejar "silent vs popup" como con MSAL, Firebase lo resuelve internamente.
   const token = await usuarioActual.getIdToken()
-  console.log('DEBUG token obtenido:', token ? token.substring(0, 20) + '...' : null)
   return token
 }
 
 // Toda llamada al backend pasa por esta instancia.
-// baseURL sale de VITE_API_BASE_URL (.env), nunca hardcodeada -
-// asi cuando el backend pase detras del API Gateway, cambiamos
-// una linea en .env y listo, sin tocar ninguna pagina.
+// La URL sale de VITE_API_BASE_URL (.env), sin duplicarla en las paginas.
+// En AWS, Nginx publica el frontend y reenvia /api/ al backend.
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {

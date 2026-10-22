@@ -1,6 +1,7 @@
 package com.cine.benja.cine_backend.controller;
 
 import com.cine.benja.cine_backend.security.AuthenticatedUser;
+import com.cine.benja.cine_backend.messaging.RabbitEventPublisher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -24,11 +25,14 @@ public class ReservaController {
 
     private final RestTemplate restTemplate;
     private final String coreUrl;
+    private final RabbitEventPublisher eventPublisher;
 
     public ReservaController(RestTemplate restTemplate,
-                              @Value("${core.service.url}") String coreUrl) {
+                              @Value("${core.service.url}") String coreUrl,
+                              RabbitEventPublisher eventPublisher) {
         this.restTemplate = restTemplate;
         this.coreUrl = coreUrl;
+        this.eventPublisher = eventPublisher;
     }
 
     private boolean esAdmin(Authentication authentication) {
@@ -81,7 +85,13 @@ public class ReservaController {
         body.put("usuario", usuario.email());
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body);
-        return restTemplate.postForEntity(coreUrl + "/internal/reservas", request, Object.class);
+        ResponseEntity<Object> respuesta = restTemplate.postForEntity(coreUrl + "/internal/reservas", request, Object.class);
+        if (respuesta.getStatusCode().is2xxSuccessful()) {
+            Object reservaId = null;
+            if (respuesta.getBody() instanceof Map<?, ?> mapa) reservaId = mapa.get("id");
+            eventPublisher.reservaCreada(reservaId, usuario.email());
+        }
+        return respuesta;
     }
 
     @DeleteMapping("/{id}")
@@ -106,6 +116,7 @@ public class ReservaController {
 
         try {
             restTemplate.delete(coreUrl + "/internal/reservas/" + id);
+            eventPublisher.reservaCancelada(id, usuario.email());
             return ResponseEntity.noContent().build();
         } catch (HttpClientErrorException.NotFound e) {
             return ResponseEntity.notFound().build();

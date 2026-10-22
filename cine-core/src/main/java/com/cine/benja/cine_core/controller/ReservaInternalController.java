@@ -2,6 +2,7 @@ package com.cine.benja.cine_core.controller;
 
 import com.cine.benja.cine_core.model.Reserva;
 import com.cine.benja.cine_core.repository.ReservaRepository;
+import com.cine.benja.cine_core.messaging.ReservaEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,11 @@ import java.util.List;
 public class ReservaInternalController {
 
     private final ReservaRepository reservaRepository;
+    private final ReservaEventPublisher eventPublisher;
 
-    public ReservaInternalController(ReservaRepository reservaRepository) {
+    public ReservaInternalController(ReservaRepository reservaRepository, ReservaEventPublisher eventPublisher) {
         this.reservaRepository = reservaRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @GetMapping
@@ -37,15 +40,18 @@ public class ReservaInternalController {
     public ResponseEntity<Reserva> crear(@RequestBody Reserva reserva) {
         reserva.setFechaReserva(LocalDateTime.now());
         Reserva guardada = reservaRepository.save(reserva);
+        eventPublisher.publicar("RESERVA_CREADA", guardada.getId(), guardada.getUsuario());
         return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelar(@PathVariable Long id) {
-        if (!reservaRepository.existsById(id)) {
+        var reserva = reservaRepository.findById(id);
+        if (reserva.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         reservaRepository.deleteById(id);
+        eventPublisher.publicar("RESERVA_CANCELADA", id, reserva.get().getUsuario());
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,0 +1,21 @@
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+**/*.iml
+.idea/
+
+# Node / React
+**/node_modules/
+**/dist/
+
+# Local secrets / environment
+.env
+.env.local
+**/.env
+**/application-local.properties
+*firebase-adminsdk*.json
+*service-account*.json
+*firebase*.json
+*.pem
+*.key
+.DS_Store

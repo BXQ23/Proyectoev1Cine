@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 // No llamamos a Firebase de verdad: usamos nuestro propio AuthenticatedUser
 // envuelto en FirebaseAuthenticationToken vía el postprocessor authentication(...)
 // de spring-security-test. Esto reemplaza lo que antes hacia jwt() con Azure.
-@SpringBootTest
+@SpringBootTest(properties = {"app.auth.mode=firebase", "firebase.credentials.path=", "spring.rabbitmq.listener.simple.auto-startup=false", "spring.rabbitmq.dynamic=false"})
 @AutoConfigureMockMvc
 class SecurityConfigTest {
 
@@ -41,6 +42,12 @@ class SecurityConfigTest {
     // cliente por un mock para no depender de que cine-core este corriendo.
     @MockBean
     private RestTemplate restTemplate;
+
+    @MockBean
+    private FirebaseAuth firebaseAuth;
+
+    @MockBean
+    private com.cine.benja.cine_backend.messaging.RabbitEventPublisher rabbitEventPublisher;
 
     private FirebaseAuthenticationToken usuarioNormal(String email) {
         AuthenticatedUser usuario = new AuthenticatedUser("uid-1", email, false);
